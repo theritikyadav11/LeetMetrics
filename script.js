@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function(){
     const easyLabel = document.getElementById("easy-label");
     const mediumLabel = document.getElementById("medium-label");
     const hardLabel = document.getElementById("hard-label");
+    // const statsContainer = document.querySelector(".stats-container");
 
 
     function validateUsername(username){
@@ -22,10 +23,51 @@ document.addEventListener('DOMContentLoaded', function(){
         if(!isMatching){
             alert("Invalid Username");
         }
+        return isMatching;
     }
 
     async function fetchUserDetails(username){
-        const url = `https://leetcode-stats-api.herokuapp.com/${username}`;
+        // const url = 'https://leetcode.com/graphql/';
+        // const myHeaders = new Headers();
+        // myHeaders.append("content-type", "application/json");
+        try{
+            button.textContent = "Searching...";
+            button.disabled = true;
+            //statsContainer.classList.add("hidden");
+
+            // const response = await fetch(url);
+            const proxyUrl = 'https://cors-anywhere.herokuapp.com/' 
+            const targetUrl = 'https://leetcode.com/graphql/';
+            
+            const myHeaders = new Headers();
+            myHeaders.append("content-type", "application/json");
+
+            const graphql = JSON.stringify({
+                query: "\n    query userSessionProgress($username: String!) {\n  allQuestionsCount {\n    difficulty\n    count\n  }\n  matchedUser(username: $username) {\n    submitStats {\n      acSubmissionNum {\n        difficulty\n        count\n        submissions\n      }\n      totalSubmissionNum {\n        difficulty\n        count\n        submissions\n      }\n    }\n  }\n}\n    ",
+                variables: { "username": `${username}` }
+            })
+            const requestOptions = {
+                method: "POST",
+                headers: myHeaders,
+                body: graphql,
+            };
+
+            const response = await fetch(proxyUrl+targetUrl, requestOptions);
+            if(!response.ok) {
+                throw new Error("Unable to fetch the User details");
+            }
+            const parsedData = await response.json();
+            console.log("Logging data: ", parsedData) ;
+
+            // displayUserData(parsedData);
+        }
+        catch(error) {
+            statsContainer.innerHTML = `<p>${error.message}</p>`
+        }
+        finally {
+            button.textContent = "Search";
+            button.disabled = false;
+        }
         
     }
 
